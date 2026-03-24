@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBG - 快速图片背景去除工具</title>
+    <style>
+        /* 简化样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .upload-area {
+            border: 3px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px;
+            background: #f9fafb;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #6366f1;
+            background: #f0f9ff;
+        }
+        .btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #4f46e5;
+        }
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .preview {
+            display: flex;
+            gap: 20px;
+            margin: 20px;
+        }
+        .preview-box {
+            flex: 1;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .preview-img {
+            width: 100%;
+            height: 200px;
+            background: #f9fafb;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .preview-img img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px;
+            padding: 20px;
+        }
+        #file-input {
+            display: none;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px;
+            display: none;
+        }
+        .loading.active {
+            display: block;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">QuickBG</div>
+            <p>快速去除图片背景</p>
+        </header>
+        
+        <div class="upload-area" id="drop-zone">
+            <div style="font-size: 48px; color: #6366f1;">📁</div>
+            <h3>上传图片</h3>
+            <p>拖放图片到这里，或点击按钮选择文件</p>
+            <button class="btn" id="select-btn">选择图片</button>
+            <input type="file" id="file-input" accept="image/*">
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="preview">
+            <div class="preview-box">
+                <h4>原始图片</h4>
+                <div class="preview-img" id="original-preview">
+                    <div style="color: #9ca3af;">等待上传</div>
+                </div>
+            </div>
+            <div class="preview-box">
+                <h4>处理结果</h4>
+                <div class="preview-img" id="result-preview">
+                    <div style="color: #9ca3af;">等待处理</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在处理...</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="process-btn" disabled>去除背景</button>
+            <button class="btn" id="download-btn" disabled>下载PNG</button>
+            <button class="btn" id="reset-btn">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        class QuickBGApp {
+            constructor() {
+                this.currentFile = null;
+                this.processedImage = null;
+                this.init();
+            }
+            
+            init() {
+                this.bindEvents();
+                console.log('QuickBG 初始化完成');
+            }
+            
+            bindEvents() {
+                // 选择文件按钮
+                document.getElementById('select-btn').addEventListener('click', () => {
+                    console.log('点击选择按钮');
+                    document.getElementById('file-input').click();
+                });
+                
+                // 文件选择
+                document.getElementById('file-input').addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        console.log('选择了文件:', e.target.files[0].name);
+                        this.handleFileSelect(e.target.files[0]);
+                    }
+                });
+                
+                // 拖放
+                const dropZone = document.getElementById('drop-zone');
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('dragover');
+                });
+                
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('dragover');
+                });
+                
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                    if (e.dataTransfer.files.length > 0) {
+                        console.log('拖放了文件:', e.dataTransfer.files[0].name);
+                        this.handleFileSelect(e.dataTransfer.files[0]);
+                    }
+                });
+                
+                // 处理按钮
+                document.getElementById('process-btn').addEventListener('click', () => {
+                    this.processImage();
+                });
+                
+                // 下载按钮
+                document.getElementById('download-btn').addEventListener('click', () => {
+                    this.downloadImage();
+                });
+                
+                // 重置按钮
+                document.getElementById('reset-btn').addEventListener('click', () => {
+                    this.reset();
+                });
+            }
+            
+            handleFileSelect(file) {
+                try {
+                    // 验证文件
+                    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                        throw new Error('请选择 JPG、PNG 或 WebP 格式的图片');
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        throw new Error('文件太大，最大支持 5MB');
+                    }
+                    
+                    this.currentFile = file;
+                    this.showStatus(`已选择: ${file.name} (${(file.size/1024).toFixed(1)}KB)`, 'success');
+                    
+                    // 预览图片
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        document.getElementById('original-preview').innerHTML = 
+                            `<img src="${e.target.result}" alt="原始图片">`;
+                        document.getElementById('process-btn').disabled = false;
+                    };
+                    reader.readAsDataURL(file);
+                    
+                } catch (error) {
+                    this.showStatus(error.message, 'error');
+                }
+            }
+            
+            async processImage() {
+                if (!this.currentFile) return;
+                
+                try {
+                    this.showLoading(true);
+                    this.showStatus('正在处理图片...', 'success');
+                    
+                    // 转换为base64
+                    const base64 = await this.fileToBase64(this.currentFile);
+                    
+                    // 调用API
+                    const response = await fetch('/api/remove-bg', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: base64 })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`API请求失败: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.processedImage = result.data;
+                        document.getElementById('result-preview').innerHTML = 
+                            `<img src="data:image/png;base64,${result.data}" alt="处理结果">`;
+                        document.getElementById('download-btn').disabled = false;
+                        this.showStatus('背景去除成功！', 'success');
+                    } else {
+                        throw new Error(result.error || '处理失败');
+                    }
+                    
+                } catch (error) {
+                    this.showStatus(`处理失败: ${error.message}`, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            
+            downloadImage() {
+                if (!this.processedImage) return;
+                
+                const link = document.createElement('a');
+                link.href = `data:image/png;base64,${this.processedImage}`;
+                link.download = `background-removed-${Date.now()}.png`;
+                link.click();
+                this.showStatus('图片已下载', 'success');
+            }
+            
+            reset() {
+                this.currentFile = null;
+                this.processedImage = null;
+                document.getElementById('original-preview').innerHTML = 
+                    '<div style="color: #9ca3af;">等待上传</div>';
+                document.getElementById('result-preview').innerHTML = 
+                    '<div style="color: #9ca3af;">等待处理</div>';
+                document.getElementById('process-btn').disabled = true;
+                document.getElementById('download-btn').disabled = true;
+                document.getElementById('file-input').value = '';
+                this.showStatus('已重置', 'success');
+            }
+            
+            fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const base64 = reader.result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            showStatus(message, type) {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+                console.log(`[${type}] ${message}`);
+            }
+            
+            showLoading(show) {
+                document.getElementById('loading').classList.toggle('active', show);
+            }
+        }
+        
+        // 初始化应用
+        window.addEventListener('load', () => {
+            window.app = new QuickBGApp();
+        });
+    </script>
+</body>
+</html>

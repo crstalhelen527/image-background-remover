@@ -1,0 +1,100 @@
+{
+  "name": "quickbg",
+  "version": "1.0.0",
+  "description": "Quick Background Remover - A lightweight image background removal tool using Cloudflare Workers and Remove.bg API",
+  "main": "worker/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler publish",
+    "deploy:prod": "wrangler publish --env production",
+    "build": "echo 'Building for Cloudflare Pages...' && cp -r src/* public/ 2>/dev/null || true",
+    "build:pages": "npm run build && echo 'Cloudflare Pages build complete'",
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:e2e": "playwright test",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint worker/ public/js/",
+    "lint:fix": "eslint worker/ public/js/ --fix",
+    "format": "prettier --write \"**/*.{js,json,md,html,css}\"",
+    "preview": "wrangler preview",
+    "tail": "wrangler tail",
+    "secret:put": "wrangler secret put",
+    "secret:list": "wrangler secret list",
+    "pages:deploy": "wrangler pages deploy ./public --project-name=quickbg",
+    "pages:dev": "wrangler pages dev ./public --port=8787",
+    "deploy:cf-pages": "./deploy.sh",
+    "clean": "rm -rf node_modules coverage dist"
+  },
+  "keywords": [
+    "background-removal",
+    "image-processing",
+    "cloudflare-workers",
+    "remove-bg",
+    "serverless"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240208.0",
+    "@jest/globals": "^30.3.0",
+    "@playwright/test": "^1.40.0",
+    "@types/jest": "^29.5.11",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "jest": "^29.7.0",
+    "jest-environment-miniflare": "^2.14.0",
+    "jsdom": "^29.0.1",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.23.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crstalhelen527/image-background-remover.git"
+  },
+  "bugs": {
+    "url": "https://github.com/crstalhelen527/image-background-remover/issues"
+  },
+  "homepage": "https://quickbg.pages.dev",
+  "jest": {
+    "testEnvironment": "miniflare",
+    "testEnvironmentOptions": {
+      "bindings": {
+        "REMOVEBG_API_KEY": "test-api-key",
+        "ALLOWED_ORIGINS": "http://localhost:3000"
+      },
+      "kvNamespaces": [
+        "IMAGE_CACHE"
+      ],
+      "d1Databases": [
+        "DB"
+      ]
+    },
+    "testMatch": [
+      "**/tests/**/*.test.js",
+      "**/tests/**/*.spec.js"
+    ],
+    "collectCoverageFrom": [
+      "worker/**/*.js",
+      "public/js/**/*.js",
+      "!**/node_modules/**",
+      "!**/tests/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  }
+}

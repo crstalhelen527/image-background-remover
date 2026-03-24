@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBG API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success { background: #d4edda; color: #155724; display: block; }
+        .error { background: #f8d7da; color: #721c24; display: block; }
+        .info { background: #d1ecf1; color: #0c5460; display: block; }
+        #test-image {
+            max-width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>QuickBG API测试页面</h1>
+    
+    <div class="test-section">
+        <h2>1. 测试图片</h2>
+        <p>这是一个100x100像素的测试图片：</p>
+        <img id="test-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgSURBVHgB7cEBAQAAAIIg/69uSEABAAAAAAAAAAAAAAAAAAAAAADgAAGQAAEAAABkAAAA" alt="测试图片">
+        <p>图片尺寸: 100x100像素</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 测试API连接</h2>
+        <button onclick="testHealth()">测试健康检查</button>
+        <button onclick="testAPI()">测试Remove.bg API</button>
+        <div id="api-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 完整功能测试</h2>
+        <p>使用上面的测试图片进行完整处理：</p>
+        <button onclick="processTestImage()">处理测试图片</button>
+        <div id="process-result"></div>
+        <div id="processed-image" style="margin-top: 20px;"></div>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        const testImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAgSURBVHgB7cEBAQAAAIIg/69uSEABAAAAAAAAAAAAAAAAAAAAAADgAAGQAAEAAABkAAAA';
+        
+        function showResult(message, type = 'info') {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = type;
+            console.log(`[${type}] ${message}`);
+        }
+        
+        async function testHealth() {
+            showResult('测试健康检查...', 'info');
+            try {
+                const response = await fetch('/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(`✅ 健康检查通过: ${data.service}`, 'success');
+                    document.getElementById('api-result').innerHTML = 
+                        `<div class="success">服务器状态: ${data.status}</div>`;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showResult(`❌ 健康检查失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAPI() {
+            showResult('测试Remove.bg API...', 'info');
+            try {
+                const response = await fetch('/api/remove-bg', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: testImageBase64 })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showResult(`✅ API测试成功! 消耗额度: ${result.credits_charged}`, 'success');
+                    document.getElementById('api-result').innerHTML = 
+                        `<div class="success">
+                            <p>✅ API连接正常</p>
+                            <p>图片尺寸: ${result.width || '未知'}x${result.height || '未知'}</p>
+                            <p>消耗额度: ${result.credits_charged}</p>
+                        </div>`;
+                } else {
+                    throw new Error(result.error || `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showResult(`❌ API测试失败: ${error.message}`, 'error');
+                document.getElementById('api-result').innerHTML = 
+                    `<div class="error">API错误: ${error.message}</div>`;
+            }
+        }
+        
+        async function processTestImage() {
+            showResult('处理测试图片...', 'info');
+            const processResult = document.getElementById('process-result');
+            processResult.innerHTML = '<div class="info">处理中...</div>';
+            
+            try {
+                const response = await fetch('/api/remove-bg', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: testImageBase64 })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showResult(`✅ 图片处理成功!`, 'success');
+                    processResult.innerHTML = `
+                        <div class="success">
+                            <p>✅ 背景去除成功!</p>
+                            <p>图片尺寸: ${result.width || '未知'}x${result.height || '未知'}</p>
+                            <p>消耗额度: ${result.credits_charged}</p>
+                            <button onclick="downloadResult('${result.data}')">下载结果</button>
+                        </div>`;
+                    
+                    // 显示处理后的图片
+                    document.getElementById('processed-image').innerHTML = `
+                        <h3>处理结果:</h3>
+                        <img src="data:image/png;base64,${result.data}" alt="处理结果" style="max-width: 200px; border: 1px solid #ddd;">
+                    `;
+                } else {
+                    throw new Error(result.error || `处理失败: HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showResult(`❌ 处理失败: ${error.message}`, 'error');
+                processResult.innerHTML = `<div class="error">处理失败: ${error.message}</div>`;
+            }
+        }
+        
+        function downloadResult(base64Data) {
+            const link = document.createElement('a');
+            link.href = `data:image/png;base64,${base64Data}`;
+            link.download = `quickbg-test-${Date.now()}.png`;
+            link.click();
+            showResult('✅ 图片已下载', 'success');
+        }
+        
+        // 页面加载时自动测试健康检查
+        window.addEventListener('load', () => {
+            showResult('页面加载完成，可以开始测试', 'info');
+            testHealth();
+        });
+    </script>
+</body>
+</html>

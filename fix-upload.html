@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBG 上传修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background: #e9ecef;
+        }
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        #preview {
+            margin: 20px 0;
+            text-align: center;
+        }
+        #preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>QuickBG 上传功能修复测试</h1>
+    
+    <div id="status" class="info">准备就绪</div>
+    
+    <div class="upload-area" id="dropZone">
+        <div style="font-size: 48px; color: #007bff;">📁</div>
+        <h3>点击选择或拖放图片</h3>
+        <p>支持 JPG、PNG、WebP 格式，最大 5MB</p>
+        <button id="selectBtn">选择图片</button>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+    </div>
+    
+    <div id="fileInfo" style="display: none;">
+        <h3>已选择文件:</h3>
+        <p id="fileName"></p>
+        <p id="fileSize"></p>
+        <button id="removeBtn">移除文件</button>
+    </div>
+    
+    <div id="preview"></div>
+    
+    <div>
+        <button id="processBtn" disabled>去除背景</button>
+        <button id="downloadBtn" disabled>下载PNG</button>
+        <button id="resetBtn">重新开始</button>
+    </div>
+    
+    <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+        <h3>调试信息</h3>
+        <div id="debugLog" style="font-family: monospace; font-size: 12px;"></div>
+    </div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const debugLog = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `[${timestamp}] ${message}\n`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            
+            // 更新状态显示
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = type;
+            
+            console.log(`[${type}] ${message}`);
+        }
+        
+        // 初始化
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectBtn = document.getElementById('selectBtn');
+        const processBtn = document.getElementById('processBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const removeBtn = document.getElementById('removeBtn');
+        const fileInfo = document.getElementById('fileInfo');
+        const preview = document.getElementById('preview');
+        
+        let currentFile = null;
+        
+        // 1. 文件选择按钮
+        selectBtn.addEventListener('click', () => {
+            log('点击选择按钮');
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        // 2. 拖放功能
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+            log('文件拖入区域');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+            log('文件拖出区域');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0) {
+                log(`拖放了 ${e.dataTransfer.files.length} 个文件`);
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // 3. 处理文件选择
+        function handleFileSelect(file) {
+            log(`选择了文件: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+            
+            // 验证文件类型
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                log(`错误: 不支持的文件格式 ${file.type}`, 'error');
+                return;
+            }
+            
+            // 验证文件大小 (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                log('错误: 文件太大，最大支持 5MB', 'error');
+                return;
+            }
+            
+            currentFile = file;
+            
+            // 显示文件信息
+            document.getElementById('fileName').textContent = `文件名: ${file.name}`;
+            document.getElementById('fileSize').textContent = `大小: ${(file.size / 1024).toFixed(2)} KB`;
+            fileInfo.style.display = 'block';
+            
+            // 启用处理按钮
+            processBtn.disabled = false;
+            
+            // 预览图片
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}" alt="预览">`;
+                log('图片预览加载完成');
+            };
+            reader.readAsDataURL(file);
+            
+            log('文件验证通过，已准备处理', 'success');
+        }
+        
+        // 4. 移除文件
+        removeBtn.addEventListener('click', () => {
+            currentFile = null;
+            fileInfo.style.display = 'none';
+            preview.innerHTML = '';
+            processBtn.disabled = true;
+            downloadBtn.disabled = true;
+            fileInput.value = '';
+            log('已移除文件');
+        });
+        
+        // 5. 处理图片
+        processBtn.addEventListener('click', async () => {
+            if (!currentFile) {
+                log('错误: 没有选择文件', 'error');
+                return;
+            }
+            
+            log('开始处理图片...');
+            processBtn.disabled = true;
+            processBtn.textContent = '处理中...';
+            
+            try {
+                // 将文件转换为base64
+                const base64 = await fileToBase64(currentFile);
+                log(`图片已转换为base64 (${base64.length} 字符)`);
+                
+                // 调用API
+                const response = await fetch('/api/remove-bg', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64 })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log('背景去除成功!', 'success');
+                    
+                    // 显示结果
+                    preview.innerHTML = `
+                        <div>
+                            <h4>处理结果:</h4>
+                            <img src="data:image/png;base64,${result.data}" alt="处理结果">
+                        </div>
+                    `;
+                    
+                    // 启用下载按钮
+                    downloadBtn.disabled = false;
+                    downloadBtn.onclick = () => {
+                        downloadImage(result.data, `background-removed-${Date.now()}.png`);
+                    };
+                    
+                } else {
+                    throw new Error(result.error || '处理失败');
+                }
+                
+            } catch (error) {
+                log(`处理失败: ${error.message}`, 'error');
+            } finally {
+                processBtn.disabled = false;
+                processBtn.textContent = '去除背景';
+            }
+        });
+        
+        // 6. 下载图片
+        function downloadImage(base64Data, filename) {
+            const link = document.createElement('a');
+            link.href = `data:image/png;base64,${base64Data}`;
+            link.download = filename;
+            link.click();
+            log(`已下载: ${filename}`);
+        }
+        
+        // 7. 重置
+        resetBtn.addEventListener('click', () => {
+            currentFile = null;
+            fileInfo.style.display = 'none';
+            preview.innerHTML = '';
+            processBtn.disabled = true;
+            downloadBtn.disabled = true;
+            fileInput.value = '';
+            log('已重置');
+        });
+        
+        // 工具函数: 文件转base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    // 移除data:image/png;base64,前缀
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 页面加载完成
+        window.addEventListener('load', () => {
+            log('页面加载完成，上传功能已就绪', 'success');
+            
+            // 测试原页面按钮
+            const originalSelectBtn = document.querySelector('#select-file-btn');
+            if (originalSelectBtn) {
+                log('找到原页面选择按钮，添加测试事件');
+                originalSelectBtn.addEventListener('click', () => {
+                    log('原页面按钮被点击');
+                });
+            }
+        });
+        
+        // 捕获错误
+        window.addEventListener('error', (event) => {
+            log(`JavaScript错误: ${event.message}`, 'error');
+        });
+    </script>
+</body>
+</html>

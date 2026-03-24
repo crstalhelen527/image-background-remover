@@ -1,0 +1,47 @@
+# Cloudflare Pages 配置文件
+# 用于 wrangler pages 命令
+
+name = "quickbg"
+type = "pages"
+account_id = "da9508a0610236e7085687e13c88bf59"
+compatibility_date = "2024-03-24"
+compatibility_flags = ["nodejs_compat"]
+
+# 生产环境配置
+[env.production]
+name = "quickbg-production"
+
+# 预览环境配置  
+[env.preview]
+name = "quickbg-preview"
+
+# 环境变量
+[vars]
+NODE_ENV = "production"
+
+# 构建配置
+[build]
+command = "npm run build"
+output_directory = "./public"
+
+# 部署配置
+[deployment]
+environments = ["production", "preview"]
+
+# 函数配置
+[[functions]]
+pattern = "/api/*"
+file = "./functions/api/remove-bg.js"
+
+[[functions]]
+pattern = "/health"
+file = "./functions/health.js"
+
+# 自定义域名配置 (可选)
+# [[routes]]
+# pattern = "quickbg.yourdomain.com/*"
+# zone_name = "yourdomain.com"
+
+# [[routes]]
+# pattern = "www.quickbg.yourdomain.com/*"
+# zone_name = "yourdomain.com"
