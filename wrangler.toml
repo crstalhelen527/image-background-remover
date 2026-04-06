@@ -1,0 +1,19 @@
+name = "image-background-remover"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "./dist"
+
+[build]
+command = "npm run build"
+
+[[routes]]
+pattern = "/api/*"
+script_name = "api-worker"
+
+[vars]
+REMOVE_BG_API_KEY = "{{REMOVE_BG_API_KEY}}"
+
+[env.production]
+REMOVE_BG_API_KEY = "{{REMOVE_BG_API_KEY}}"
+
+[env.staging]
+REMOVE_BG_API_KEY = "{{REMOVE_BG_API_KEY}}"
