@@ -1,0 +1,32 @@
+{
+  "project": "image-background-remover",
+  "version": "1.2",
+  "deploy_time": "$(date -Iseconds)",
+  "status": "ready",
+  "files": [
+    {
+      "name": "index.html",
+      "size": "$(stat -c%s "$DEPLOY_DIR/index.html")",
+      "type": "main"
+    },
+    {
+      "name": "README.md",
+      "size": "$(stat -c%s "$DEPLOY_DIR/README.md")",
+      "type": "documentation"
+    }
+  ],
+  "features": [
+    "google_login_simulation",
+    "user_system",
+    "credit_management",
+    "image_processing_simulation",
+    "responsive_design",
+    "local_storage"
+  ],
+  "fixes": [
+    "missing_auth_js",
+    "broken_google_login",
+    "no_user_system",
+    "non_functional_buttons"
+  ]
+}

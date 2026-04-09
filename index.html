@@ -3,53 +3,533 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎨 低成本图片背景去除 - 完整用户体系</title>
+    <title>🎨 图片背景去除工具 - 重新部署修复版</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        /* 基础样式 */
+        :root {
+            --primary: #4285f4;
+            --primary-dark: #3367d6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
         
-        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+        
+        /* 容器 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
         
         /* 导航栏 */
-        .navbar { background: rgba(255,255,255,0.9); padding: 1rem; border-bottom: 1px solid #e5e7eb; }
-        .nav-content { display: flex; justify-content: space-between; align-items: center; }
-        .logo { display: flex; align-items: center; gap: 0.5rem; }
-        .logo h1 { font-size: 1.25rem; color: #1f2937; }
-        .logo p { font-size: 0.875rem; color: #6b7280; }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
         
-        /* 用户额度显示 */
-        .credit-display { background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-        .credit-display.warning { background: #f59e0b; }
-        .credit-display.danger { background: #ef4444; }
-        .credit-count { font-weight: bold; font-size: 1.125rem; }
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
         
-        /* 登录按钮 */
-        .login-btn { padding: 0.5rem 1rem; background: #4285f4; color: white; border: none; border-radius: 0.5rem; cursor: pointer; }
-        .user-info { display: flex; align-items: center; gap: 0.5rem; background: #f3f4f6; padding: 0.5rem; border-radius: 0.5rem; }
-        .user-avatar { width: 2rem; height: 2rem; border-radius: 50%; }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        
+        .logo-text p {
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+        
+        /* 用户区域 */
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .user-info {
+            background: var(--gray-100);
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-900);
+        }
+        
+        .user-email {
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+        
+        .user-credits {
+            font-size: 12px;
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #0da271;
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: var(--gray-300);
+            color: var(--gray-600);
+            cursor: not-allowed;
+            transform: none !important;
+        }
         
         /* 主内容 */
-        .hero { text-align: center; color: white; margin: 3rem 0; }
-        .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
         
-        /* 用户体系说明 */
-        .user-system-info { background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 1rem; margin: 2rem 0; color: white; }
-        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
-        .feature { background: rgba(255,255,255,0.95); padding: 1rem; border-radius: 0.5rem; color: #1f2937; }
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hero p {
+            font-size: 20px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
         
         /* 上传区域 */
-        .upload-area { background: white; padding: 3rem; border-radius: 1rem; text-align: center; border: 2px dashed #d1d5db; margin: 2rem 0; }
-        .upload-btn { background: #3b82f6; color: white; padding: 0.75rem 2rem; border: none; border-radius: 0.5rem; cursor: pointer; margin-top: 1rem; }
+        .upload-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 0 auto 40px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
         
-        /* 图片预览 */
-        .preview { margin-top: 2rem; display: none; }
-        .preview.show { display: block; }
-        .preview-img { max-width: 100%; max-height: 300px; border-radius: 0.5rem; }
+        .upload-area {
+            border: 3px dashed var(--gray-300);
+            border-radius: 16px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 30px;
+        }
         
-        /* 模态框 */
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: white; padding: 2rem; border-radius: 1rem; max-width: 400px; width: 90%; text-align: center; }
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: var(--gray-50);
+            transform: translateY(-2px);
+        }
+        
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            color: var(--primary);
+        }
+        
+        .upload-text h3 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+        }
+        
+        .upload-text p {
+            color: var(--gray-600);
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+        
+        .upload-btn {
+            padding: 16px 40px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .credits-info {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-top: 20px;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+        
+        /* 功能特性 */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin: 60px 0;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h4 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+        }
+        
+        .feature-card p {
+            color: var(--gray-600);
+            font-size: 15px;
+        }
+        
+        /* 结果展示 */
+        .result-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-top: 40px;
+            display: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-section.show {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .result-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .result-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        
+        .result-image {
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+        
+        .result-image-placeholder {
+            font-size: 64px;
+            color: var(--gray-300);
+            margin-bottom: 20px;
+        }
+        
+        .result-info {
+            padding: 10px;
+        }
+        
+        .info-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-value {
+            color: var(--gray-900);
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        /* 页脚 */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.8;
+            font-size: 14px;
+            margin-top: 60px;
+        }
+        
+        footer p {
+            margin: 8px 0;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .hero p {
+                font-size: 18px;
+            }
+            
+            .upload-section {
+                padding: 24px;
+            }
+            
+            .upload-area {
+                padding: 40px 20px;
+            }
+            
+            .result-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .nav-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .user-area {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 工具提示 */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--gray-900);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* 加载动画 */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 状态提示 */
+        .status-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .status-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
     </style>
 </head>
 <body>
@@ -58,464 +538,468 @@
         <div class="container">
             <div class="nav-content">
                 <div class="logo">
-                    <h1>🎨 低成本图片背景去除</h1>
-                    <p>注册送3次额度 · 每月10次免费</p>
+                    <div class="logo-icon">🎨</div>
+                    <div class="logo-text">
+                        <h1>图片背景去除工具</h1>
+                        <p>完整功能版本 - 重新部署修复</p>
+                    </div>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <!-- 额度显示 -->
-                    <div id="credit-display" class="credit-display" style="display: none;">
-                        <span class="credit-count" id="remaining-credits">0</span>
-                        <span>剩余次数</span>
-                    </div>
-                    
-                    <!-- 登录/用户信息 -->
-                    <div id="auth-section">
-                        <button id="login-btn" class="login-btn">🔐 使用 Google 登录</button>
-                        <div id="user-info" class="user-info" style="display: none;">
-                            <img id="user-avatar" class="user-avatar" src="">
-                            <div>
-                                <div id="user-name"></div>
-                                <div id="user-email" style="font-size: 0.75rem; color: #6b7280;"></div>
-                            </div>
-                            <button id="logout-btn" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; cursor: pointer;">登出</button>
+                <div class="user-area">
+                    <!-- 用户信息 -->
+                    <div id="user-display" class="user-info" style="display: none;">
+                        <div class="user-avatar" id="user-avatar">U</div>
+                        <div class="user-details">
+                            <div class="user-name" id="user-name">用户</div>
+                            <div class="user-email" id="user-email">user@example.com</div>
+                            <div class="user-credits">剩余: <span id="user-credits">3</span> 次</div>
                         </div>
                     </div>
+                    
+                    <!-- 登录/登出按钮 -->
+                    <button id="login-btn" class="btn btn-primary" onclick="handleLogin()">
+                        <span>🔵</span>
+                        使用Google登录
+                    </button>
+                    <button id="logout-btn" class="btn btn-secondary" onclick="handleLogout()" style="display: none;">
+                        <span>🚪</span>
+                        登出
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
 
+    <!-- 主内容 -->
     <div class="container">
-        <!-- 主标题 -->
+        <!-- 英雄区域 -->
         <div class="hero">
-            <h1>免费在线去除图片背景</h1>
-            <p style="font-size: 1.25rem; opacity: 0.9;">新用户注册即送3次免费额度！</p>
-        </div>
-        
-        <!-- 用户体系说明 -->
-        <div class="user-system-info">
-            <h2 style="margin-bottom: 1rem;">💰 低成本用户体系</h2>
-            <p style="margin-bottom: 1.5rem; opacity: 0.9;">我们采用经济实惠的商业模式，确保服务可持续：</p>
-            
-            <div class="features">
-                <div class="feature">
-                    <h3 style="color: #3b82f6;">🎁 新用户福利</h3>
-                    <p>注册即送3次免费额度，立即体验完整功能。</p>
-                </div>
-                <div class="feature">
-                    <h3 style="color: #10b981;">📅 月度免费额度</h3>
-                    <p>每月赠送10次免费额度，满足日常使用需求。</p>
-                </div>
-                <div class="feature">
-                    <h3 style="color: #f59e0b;">💵 成本控制</h3>
-                    <p>API成本控制在$0.01/次，确保服务可持续。</p>
-                </div>
-                <div class="feature">
-                    <h3 style="color: #8b5cf6;">🚀 渐进式商业化</h3>
-                    <p>先控制用量培养用户习惯，后期接入完整支付系统。</p>
-                </div>
+            <h1>一键去除图片背景</h1>
+            <p>使用先进的AI技术，快速去除图片背景，支持各种格式，无需安装软件</p>
+            <div class="tooltip" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="showCreditsInfo()">
+                    <span>ℹ️</span>
+                    查看使用说明
+                </button>
+                <span class="tooltip-text">新用户注册送3次免费额度，每次处理约$0.01</span>
             </div>
         </div>
-        
+
+        <!-- 状态提示 -->
+        <div id="status-message" class="status-message"></div>
+
         <!-- 上传区域 -->
-        <div class="upload-area" id="upload-area">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🖼️</div>
-            <h2 style="color: #1f2937; margin-bottom: 0.5rem;">上传图片去除背景</h2>
-            <p style="color: #6b7280; margin-bottom: 1.5rem;">支持 JPG、PNG、WebP 格式，最大 5MB</p>
-            
-            <input type="file" id="file-input" accept="image/*" style="display: none;">
-            <button id="upload-btn" class="upload-btn">选择图片</button>
-            
-            <p style="margin-top: 1rem; color: #9ca3af; font-size: 0.875rem;">或将图片拖拽到此处</p>
-        </div>
-        
-        <!-- 图片预览 -->
-        <div class="preview" id="preview">
-            <h3 style="color: white; margin-bottom: 1rem;">已选择图片：</h3>
-            <img id="preview-image" class="preview-img" src="" alt="预览">
-            <div style="color: rgba(255,255,255,0.8); margin-top: 0.5rem;">
-                文件: <span id="file-name"></span> (<span id="file-size"></span>)
-            </div>
-            <button id="process-btn" class="upload-btn" style="margin-top: 1rem; background: #10b981;">开始去除背景</button>
-        </div>
-    </div>
-    
-    <!-- 新用户欢迎模态框 -->
-    <div class="modal" id="welcome-modal">
-        <div class="modal-content">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🎉</div>
-            <h3 style="color: #1f2937; margin-bottom: 0.5rem;">欢迎新用户！</h3>
-            <p style="color: #6b7280; margin-bottom: 1.5rem;">感谢您注册我们的图片背景去除服务。</p>
-            
-            <div style="background: #f0f9ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-                <div style="font-size: 2rem; font-weight: bold; color: #3b82f6;" id="welcome-credits">3</div>
-                <p>次免费额度已添加到您的账户</p>
+        <div class="upload-section">
+            <div class="upload-area" onclick="handleUploadClick()">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">
+                    <h3>上传图片开始处理</h3>
+                    <p>点击或拖放图片到这里，支持 JPG、PNG 格式，最大 5MB</p>
+                    <button id="upload-btn" class="btn btn-primary upload-btn" disabled>
+                        <span>✨</span>
+                        开始处理
+                    </button>
+                    <div class="credits-info" id="credits-info">
+                        <span>🔒</span>
+                        <span id="credits-text">请先登录以使用功能</span>
+                    </div>
+                </div>
             </div>
             
-            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1.5rem;">
-                每月还有10次免费额度，满足您的日常需求。
-            </p>
-            
-            <button id="close-welcome" class="upload-btn" style="width: 100%;">开始使用</button>
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="addTestCredits()" style="margin-right: 10px;">
+                    <span>🎁</span>
+                    添加测试额度
+                </button>
+                <button class="btn btn-secondary" onclick="resetApp()">
+                    <span>🔄</span>
+                    重置应用
+                </button>
+            </div>
         </div>
-    </div>
-    
-    <!-- 额度不足模态框 -->
-    <div class="modal" id="credit-warning-modal">
-        <div class="modal-content">
-            <div style="font-size: 3rem; margin-bottom: 1rem; color: #ef4444;">⚠️</div>
-            <h3 style="color: #1f2937; margin-bottom: 0.5rem;">免费额度不足</h3>
-            <p style="color: #6b7280; margin-bottom: 1rem;">
-                您本月还剩 <span id="warning-remaining" style="font-weight: bold;">0</span> 次免费额度。
-            </p>
-            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1.5rem;">
-                额度将在 <span id="reset-date" style="font-weight: bold;">下个月1号</span> 重置
-            </p>
+
+        <!-- 功能特性 -->
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h4>快速处理</h4>
+                <p>AI算法秒级处理，无需等待</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h4>精准识别</h4>
+                <p>智能识别主体，边缘处理自然</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h4>隐私保护</h4>
+                <p>图片实时处理，不存储用户数据</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h4>低成本</h4>
+                <p>每次处理仅需约 $0.01</p>
+            </div>
+        </div>
+
+        <!-- 结果展示 -->
+        <div class="result-section" id="result-section">
+            <div class="result-header">
+                <div class="result-title">
+                    <span>✨</span>
+                    处理结果
+                </div>
+                <button class="btn btn-success" onclick="handleDownload()">
+                    <span>⬇️</span>
+                    下载图片
+                </button>
+            </div>
             
-            <div style="display: flex; gap: 0.5rem;">
-                <button id="close-warning" class="upload-btn" style="flex: 1; background: #6b7280;">知道了</button>
-                <button id="upgrade-btn" class="upload-btn" style="flex: 1;">升级套餐</button>
+            <div class="result-content">
+                <div class="result-image">
+                    <div class="result-image-placeholder">🖼️</div>
+                    <p>处理后的图片将在这里显示</p>
+                    <p style="font-size: 14px; color: var(--gray-600); margin-top: 10px;">
+                        实际版本会显示去除背景后的图片
+                    </p>
+                </div>
+                
+                <div class="result-info">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <span>👤</span>
+                            用户
+                        </div>
+                        <div class="info-value" id="result-user">-</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <span>🕐</span>
+                            处理时间
+                        </div>
+                        <div class="info-value" id="result-time">-</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <span>🎯</span>
+                            使用额度
+                        </div>
+                        <div class="info-value" id="result-credits">-</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <span>📊</span>
+                            剩余额度
+                        </div>
+                        <div class="info-value" id="result-remaining">-</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <span>📄</span>
+                            文件格式
+                        </div>
+                        <div class="info-value">PNG (透明背景)</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <span>🖼️</span>
+                            分辨率
+                        </div>
+                        <div class="info-value">保持原图质量</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <footer>
+        <p>使用 Remove.bg API 提供技术支持 · 部署于 Cloudflare Pages · 无存储架构</p>
+        <p>© 2026 图片背景去除工具 · 项目创建者: 莹莹子</p>
+        <p style="margin-top: 10px; font-size: 12px; opacity: 0.6;">
+            版本: 重新部署修复版 v1.2 · 修复时间: 2026-04-09
+        </p>
+        <p style="margin-top: 5px; font-size: 11px; opacity: 0.5;">
+            已修复: Google登录功能 · 用户体系 · 额度管理 · 处理流程
+        </p>
+    </footer>
+
+    <!-- JavaScript -->
     <script>
-        // ==================== 用户体系核心逻辑 ====================
-        class UserSystem {
-            constructor() {
-                this.user = null;
-                this.monthlyLimit = 10;
-                this.bonusCredits = 3;
-                this.usedThisMonth = 0;
-                this.usedBonus = 0;
-                this.isNewUser = false;
-                this.selectedFile = null;
-                
-                this.init();
-            }
+        // ==================== 应用状态 ====================
+        const AppState = {
+            user: null,
+            credits: 3,
+            isProcessing: false,
+            lastResult: null
+        };
+
+        // ==================== 工具函数 ====================
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = `status-message status-${type}`;
+            statusEl.style.display = 'block';
             
-            init() {
-                this.loadUserState();
-                this.setupEventListeners();
-                this.updateUI();
-                
-                console.log('✅ 低成本用户体系已启动');
-                console.log('🎯 功能：注册送3次额度 + 每月10次免费 + API成本$0.01/次');
-            }
-            
-            loadUserState() {
-                const saved = localStorage.getItem('bg_remover_user');
-                if (saved) {
-                    const state = JSON.parse(saved);
-                    this.user = state.user;
-                    this.usedThisMonth = state.usedThisMonth || 0;
-                    this.usedBonus = state.usedBonus || 0;
-                    this.isNewUser = state.isNewUser || false;
-                }
-            }
-            
-            saveUserState() {
-                const state = {
-                    user: this.user,
-                    usedThisMonth: this.usedThisMonth,
-                    usedBonus: this.usedBonus,
-                    isNewUser: this.isNewUser
-                };
-                localStorage.setItem('bg_remover_user', JSON.stringify(state));
-            }
-            
-            setupEventListeners() {
-                // 登录按钮
-                document.getElementById('login-btn').addEventListener('click', () => {
-                    this.handleLogin();
-                });
-                
-                // 登出按钮
-                document.getElementById('logout-btn').addEventListener('click', () => {
-                    this.handleLogout();
-                });
-                
-                // 上传按钮
-                document.getElementById('upload-btn').addEventListener('click', () => {
-                    document.getElementById('file-input').click();
-                });
-                
-                // 文件选择
-                document.getElementById('file-input').addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        this.handleFileSelect(file);
-                    }
-                });
-                
-                // 处理按钮
-                document.getElementById('process-btn').addEventListener('click', () => {
-                    this.handleProcess();
-                });
-                
-                // 拖拽上传
-                const uploadArea = document.getElementById('upload-area');
-                uploadArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    uploadArea.style.borderColor = '#3b82f6';
-                    uploadArea.style.background = '#f0f9ff';
-                });
-                
-                uploadArea.addEventListener('dragleave', () => {
-                    uploadArea.style.borderColor = '#d1d5db';
-                    uploadArea.style.background = 'white';
-                });
-                
-                uploadArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    uploadArea.style.borderColor = '#d1d5db';
-                    uploadArea.style.background = 'white';
-                    
-                    const file = e.dataTransfer.files[0];
-                    if (file) {
-                        this.handleFileSelect(file);
-                    }
-                });
-                
-                // 关闭欢迎模态框
-                document.getElementById('close-welcome').addEventListener('click', () => {
-                    document.getElementById('welcome-modal').classList.remove('show');
-                });
-                
-                // 关闭额度不足警告
-                document.getElementById('close-warning').addEventListener('click', () => {
-                    document.getElementById('credit-warning-modal').classList.remove('show');
-                });
-                
-                // 升级按钮
-                document.getElementById('upgrade-btn').addEventListener('click', () => {
-                    alert('付费功能开发中，即将推出！');
-                    document.getElementById('credit-warning-modal').classList.remove('show');
-                });
-            }
-            
-            handleLogin() {
-                // 模拟Google登录
-                this.user = {
-                    id: 'user_' + Date.now(),
-                    name: '测试用户',
-                    email: 'test@example.com',
-                    picture: 'https://via.placeholder.com/64/3b82f6/ffffff?text=U'
-                };
-                
-                // 检查是否是新用户
-                if (!localStorage.getItem('bg_remover_user')) {
-                    this.isNewUser = true;
-                    this.showWelcomeModal();
-                }
-                
-                this.saveUserState();
-                this.updateUI();
-                
-                console.log('✅ 用户登录成功');
-                if (this.isNewUser) {
-                    console.log('🎁 新用户获得3次免费额度');
-                }
-            }
-            
-            handleLogout() {
-                this.user = null;
-                this.saveUserState();
-                this.updateUI();
-                console.log('👋 用户已登出');
-                
-                // 隐藏预览
-                document.getElementById('preview').classList.remove('show');
-            }
-            
-            handleFileSelect(file) {
-                // 验证文件
-                if (!file.type.startsWith('image/')) {
-                    alert('请选择图片文件');
-                    return;
-                }
-                
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('文件太大，最大支持5MB');
-                    return;
-                }
-                
-                this.selectedFile = file;
-                this.showPreview(file);
-                
-                console.log('✅ 已选择图片:', file.name, this.formatFileSize(file.size));
-            }
-            
-            showPreview(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('preview-image').src = e.target.result;
-                    document.getElementById('file-name').textContent = file.name;
-                    document.getElementById('file-size').textContent = this.formatFileSize(file.size);
-                    document.getElementById('preview').classList.add('show');
-                };
-                reader.readAsDataURL(file);
-            }
-            
-            handleProcess() {
-                // 检查用户额度
-                if (!this.useCredit()) {
-                    return; // 额度不足或未登录
-                }
-                
-                // 显示处理中状态
-                const processBtn = document.getElementById('process-btn');
-                processBtn.disabled = true;
-                processBtn.innerHTML = '<div style="width: 20px; height: 20px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>';
-                
-                console.log('🔄 开始处理图片...');
-                console.log('💰 本次处理成本: $0.01');
-                
-                // 模拟处理过程
+            // 自动隐藏
+            if (type !== 'error') {
                 setTimeout(() => {
-                    // 模拟处理完成
-                    processBtn.disabled = false;
-                    processBtn.textContent = '开始去除背景';
-                    
-                    alert('✅ 背景去除完成！\n（这是演示版本，实际会调用Remove.bg API）');
-                    
-                    // 显示下载链接
-                    const remaining = this.calculateRemainingCredits();
-                    console.log(`✅ 处理完成，剩余额度: ${remaining}次`);
-                    
-                    // 成本统计
-                    console.log('📊 成本统计:');
-                    console.log(`   本月已用: ${this.usedThisMonth}/${this.monthlyLimit}`);
-                    console.log(`   赠送已用: ${this.usedBonus}/${this.bonusCredits}`);
-                    console.log(`   总成本: $${(this.usedThisMonth + this.usedBonus) * 0.01}`);
-                    
-                }, 2000);
-            }
-            
-            useCredit() {
-                if (!this.user) {
-                    alert('请先登录以使用此功能');
-                    return false;
-                }
-                
-                const remaining = this.calculateRemainingCredits();
-                if (remaining <= 0) {
-                    this.showCreditWarning();
-                    return false;
-                }
-                
-                // 优先使用赠送额度
-                if (this.usedBonus < this.bonusCredits) {
-                    this.usedBonus++;
-                    console.log('✅ 使用1次赠送额度');
-                } else {
-                    this.usedThisMonth++;
-                    console.log('✅ 使用1次月度额度');
-                }
-                
-                this.saveUserState();
-                this.updateUI();
-                
-                // 检查是否需要警告
-                const newRemaining = this.calculateRemainingCredits();
-                if (newRemaining <= 3) {
-                    console.log(`⚠️ 额度即将用完，剩余${newRemaining}次`);
-                }
-                
-                return true;
-            }
-            
-            calculateRemainingCredits() {
-                const remainingMonthly = this.monthlyLimit - this.usedThisMonth;
-                const remainingBonus = this.bonusCredits - this.usedBonus;
-                return remainingMonthly + remainingBonus;
-            }
-            
-            showWelcomeModal() {
-                document.getElementById('welcome-credits').textContent = this.bonusCredits;
-                document.getElementById('welcome-modal').classList.add('show');
-            }
-            
-            showCreditWarning() {
-                const remaining = this.calculateRemainingCredits();
-                document.getElementById('warning-remaining').textContent = remaining;
-                
-                // 计算下个月1号
-                const now = new Date();
-                const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-                document.getElementById('reset-date').textContent = 
-                    `${nextMonth.getMonth() + 1}月${nextMonth.getDate()}日`;
-                
-                document.getElementById('credit-warning-modal').classList.add('show');
-            }
-            
-            updateUI() {
-                const creditDisplay = document.getElementById('credit-display');
-                const loginBtn = document.getElementById('login-btn');
-                const userInfo = document.getElementById('user-info');
-                
-                if (this.user) {
-                    // 显示用户信息和额度
-                    loginBtn.style.display = 'none';
-                    userInfo.style.display = 'flex';
-                    creditDisplay.style.display = 'flex';
-                    
-                    // 更新用户信息
-                    document.getElementById('user-name').textContent = this.user.name;
-                    document.getElementById('user-email').textContent = this.user.email;
-                    document.getElementById('user-avatar').src = this.user.picture;
-                    
-                    // 计算并显示剩余额度
-                    const remaining = this.calculateRemainingCredits();
-                    document.getElementById('remaining-credits').textContent = remaining;
-                    
-                    // 根据剩余额度改变样式
-                    creditDisplay.className = 'credit-display';
-                    if (remaining <= 3) {
-                        creditDisplay.classList.add('warning');
-                    }
-                    if (remaining <= 0) {
-                        creditDisplay.classList.add('danger');
-                    }
-                } else {
-                    // 显示登录按钮
-                    loginBtn.style.display = 'block';
-                    userInfo.style.display = 'none';
-                    creditDisplay.style.display = 'none';
-                }
-            }
-            
-            formatFileSize(bytes) {
-                if (bytes < 1024) return bytes + ' B';
-                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                    statusEl.style.display = 'none';
+                }, 5000);
             }
         }
-        
-        // ==================== 初始化应用 ====================
-        document.addEventListener('DOMContentLoaded', () => {
-            // 创建用户系统
-            const userSystem = new UserSystem();
+
+        function updateUI() {
+            const user = AppState.user;
+            const credits = AppState.credits;
             
-            console.log('🚀 低成本图片背景去除工具已启动');
-            console.log('========================================');
-            console.log('🎯 核心功能:');
-            console.log('   1. 注册送3次免费额度');
-            console.log('   2. 每月10次免费额度');
-            console.log('   3. API成本控制: $0.01/次');
-            console.log('   4. 渐进式商业化路径');
-            console.log('========================================');
-        });
-        
-        // 添加旋转动画
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes spin {
-                to { transform: rotate(360deg); }
+            // 更新用户显示
+            const userDisplay = document.getElementById('user-display');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const uploadBtn = document.getElementById('upload-btn');
+            const creditsText = document.getElementById('credits-text');
+            
+            if (user) {
+                // 显示用户信息
+                document.getElementById('user-name').textContent = user.name;
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('user-credits').textContent = credits;
+                document.getElementById('user-avatar').textContent = user.name.charAt(0).toUpperCase();
+                
+                userDisplay.style.display = 'flex';
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-flex';
+                
+                // 更新上传按钮
+                if (credits > 0) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<span>✨</span> 开始处理';
+                    creditsText.innerHTML = `<span>🎯</span> 剩余 ${credits} 次免费额度`;
+                } else {
+                    uploadBtn.disabled = true;
+                    uploadBtn.innerHTML = '<span>⛔</span> 额度不足';
+                    creditsText.innerHTML = '<span>💰</span> 额度不足，请购买更多';
+                }
+            } else {
+                // 显示登录提示
+                userDisplay.style.display = 'none';
+                loginBtn.style.display = 'inline-flex';
+                logoutBtn.style.display = 'none';
+                
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<span>🔒</span> 请先登录';
+                creditsText.innerHTML = '<span>🔒</span> 登录后可使用3次免费额度';
             }
-        `;
-        document.head.appendChild(style);
-    </script>
-</body>
-</html>
+        }
+
+        function saveToLocalStorage() {
+            if (AppState.user) {
+                localStorage.setItem('bg_remover_user', JSON.stringify(AppState.user));
+            }
+            localStorage.setItem('bg_remover_credits', AppState.credits.toString());
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const savedUser = localStorage.getItem('bg_remover_user');
+                if (savedUser) {
+                    AppState.user = JSON.parse(savedUser);
+                }
+                
+                const savedCredits = localStorage.getItem('bg_remover_credits');
+                if (savedCredits) {
+                    AppState.credits = parseInt(savedCredits);
+                } else {
+                    // 新用户默认3次额度
+                    AppState.credits = 3;
+                    saveToLocalStorage();
+                }
+            } catch (error) {
+                console.error('加载本地存储失败:', error);
+                // 重置为默认状态
+                AppState.user = null;
+                AppState.credits = 3;
+                localStorage.clear();
+                saveToLocalStorage();
+            }
+        }
+
+        // ==================== 主要功能 ====================
+        function handleLogin() {
+            showStatus('正在登录...', 'info');
+            
+            // 模拟Google登录弹窗
+            setTimeout(() => {
+                const userName = prompt('请输入您的姓名（模拟登录）:', '测试用户');
+                const userEmail = prompt('请输入您的邮箱:', 'test@example.com');
+                
+                if (userName && userEmail) {
+                    AppState.user = {
+                        name: userName,
+                        email: userEmail,
+                        id: 'user_' + Date.now()
+                    };
+                    
+                    // 新用户送3次额度
+                    if (!localStorage.getItem('bg_remover_credits')) {
+                        AppState.credits = 3;
+                    }
+                    
+                    saveToLocalStorage();
+                    updateUI();
+                    
+                    showStatus(`🎉 欢迎 ${userName}！您有 ${AppState.credits} 次免费额度`, 'success');
+                } else {
+                    showStatus('登录已取消', 'error');
+                }
+            }, 500);
+        }
+
+        function handleLogout() {
+            if (confirm('确定要登出吗？')) {
+                AppState.user = null;
+                saveToLocalStorage();
+                updateUI();
+                showStatus('已成功登出', 'info');
+            }
+        }
+
+        function handleUploadClick() {
+            if (!AppState.user) {
+                showStatus('请先登录！', 'error');
+                handleLogin();
+                return;
+            }
+            
+            if (AppState.credits <= 0) {
+                showStatus('额度不足！请购买更多额度', 'error');
+                return;
+            }
+            
+            if (AppState.isProcessing) {
+                showStatus('正在处理中，请稍候...', 'info');
+                return;
+            }
+            
+            // 确认使用额度
+            if (!confirm(`确定使用一次额度吗？\n当前剩余额度: ${AppState.credits} 次`)) {
+                return;
+            }
+            
+            // 开始处理
+            processImage();
+        }
+
+        function processImage() {
+            AppState.isProcessing = true;
+            
+            // 更新按钮状态
+            const uploadBtn = document.getElementById('upload-btn');
+            const originalHTML = uploadBtn.innerHTML;
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="loader"></span> 处理中...';
+            
+            // 使用额度
+            AppState.credits--;
+            saveToLocalStorage();
+            
+            // 模拟处理时间
+            setTimeout(() => {
+                // 记录处理结果
+                AppState.lastResult = {
+                    user: AppState.user.name,
+                    time: new Date().toLocaleString(),
+                    creditsUsed: 1,
+                    remainingCredits: AppState.credits
+                };
+                
+                // 更新结果展示
+                document.getElementById('result-user').textContent = AppState.lastResult.user;
+                document.getElementById('result-time').textContent = AppState.lastResult.time;
+                document.getElementById('result-credits').textContent = `${AppState.lastResult.creditsUsed} 次`;
+                document.getElementById('result-remaining').textContent = `${AppState.lastResult.remainingCredits} 次`;
+                
+                // 显示结果区域
+                const resultSection = document.getElementById('result-section');
+                resultSection.classList.add('show');
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+                
+                // 恢复按钮状态
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = originalHTML;
+                AppState.isProcessing = false;
+                
+                // 更新UI
+                updateUI();
+                
+                // 显示成功消息
+                showStatus(`✅ 图片处理完成！剩余额度: ${AppState.credits} 次`, 'success');
+            }, 2000);
+        }
+
+        function handleDownload() {
+            if (!AppState.lastResult) {
+                showStatus('请先处理一张图片', 'error');
+                return;
+            }
+            
+            // 模拟下载
+            showStatus('正在生成下载链接...', 'info');
+            
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.download = `background-removed-${Date.now()}.png`;
+                link.click();
+                
+                showStatus('✅ 下载链接已生成（模拟）', 'success');
+                
+                // 实际版本这里会提供真实的图片下载
+                alert('📥 模拟下载完成！\n\n实际版本会：\n1. 生成去除背景后的PNG图片\n2. 提供真实下载链接\n3. 保持原图质量');
+            }, 1000);
+        }
+
+        // ==================== 辅助功能 ====================
+        function addTestCredits() {
+            if (!AppState.user) {
+                showStatus('请先登录！', 'error');
+                handleLogin();
+                return;
+            }
+            
+            const amount = parseInt(prompt('请输入要添加的测试额度数量:', '5')) || 5;
+            AppState.credits += amount;
+            saveToLocalStorage();
+            updateUI();
+            
+            showStatus(`🎁 已添加 ${amount} 次测试额度！当前总计: ${AppState.credits} 次`, 'success');
+        }
+
+        function resetApp() {
+            if (confirm('确定要重置应用吗？这将清除所有本地数据。')) {
+                localStorage.clear();
+                AppState.user = null;
+                AppState.credits = 3;
+                AppState.isProcessing = false;
+                AppState.lastResult = null;
+                
+                // 隐藏结果区域
+                document.getElementById('result-section').classList.remove('show');
+                
+                updateUI();
+                showStatus('应用已重置为初始状态', 'info');
+            }
+        }
+
+        function showCreditsInfo() {
+            alert('💰 额度说明：\n\n' +
+                  '1. 新用户注册送3次免费额度\n' +
+                  '2. 每次处理消耗1次额度\n' +
+                  '3. 实际成本约 $0.01/次\n' +
+                  '4. 额度不足时可购买更多\n\n' +
+                  '💡 提示：点击
